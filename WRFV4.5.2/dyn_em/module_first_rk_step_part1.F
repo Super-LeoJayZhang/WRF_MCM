@@ -61,6 +61,9 @@ CONTAINS
 #endif
 #endif
     USE module_utility
+
+    USE module_multi_layer_canopy_model  ! yulong
+
     IMPLICIT NONE
 
     TYPE ( domain ), INTENT(INOUT) :: grid
@@ -223,6 +226,23 @@ BENCH_END(init_zero_tend_tim)
       !$OMP END PARALLEL DO
 
 BENCH_END(phy_prep_tim)
+
+!-----------------------------------------------------------
+!   MCANOPY driver, add by yulong
+!-----------------------------------------------------------
+  DO ij = 1 , grid%num_tiles
+      CALL MCM_DRIVER( grid, config_flags, &
+                       t_phy, p_phy,       &
+                       moist(:,:,:,P_QV), scalar(:,:,:,P_CO2),          &
+                       moist_tend(:,:,:,P_QV), scalar_tend(:,:,:,P_CO2),&
+                       ru_tendf, rv_tendf, rw_tendf, t_tendf, tke_tend, &
+                       ids, ide, jds, jde, kds, kde,     &
+                       ims, ime, jms, jme, kms, kme,     &
+                       grid%i_start(ij), grid%i_end(ij),                &
+                       grid%j_start(ij), grid%j_end(ij),                &
+                       k_start, k_end                                   )
+  ENDDO
+!-----------------------------------------------------------
 
 ! radiation
      CALL domain_clock_get( grid, current_time=currentTime, &
