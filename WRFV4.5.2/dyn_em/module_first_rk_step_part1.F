@@ -230,18 +230,20 @@ BENCH_END(phy_prep_tim)
 !-----------------------------------------------------------
 !   MCANOPY driver, add by yulong
 !-----------------------------------------------------------
-  DO ij = 1 , grid%num_tiles
-      CALL MCM_DRIVER( grid, config_flags, &
-                       t_phy, p_phy,       &
-                       moist(:,:,:,P_QV), scalar(:,:,:,P_CO2),          &
-                       moist_tend(:,:,:,P_QV), scalar_tend(:,:,:,P_CO2),&
-                       ru_tendf, rv_tendf, rw_tendf, t_tendf, tke_tend, &
-                       ids, ide, jds, jde, kds, kde,     &
-                       ims, ime, jms, jme, kms, kme,     &
-                       grid%i_start(ij), grid%i_end(ij),                &
-                       grid%j_start(ij), grid%j_end(ij),                &
-                       k_start, k_end                                   )
-  ENDDO
+  if (config_flags%mcm_opt > 0) then
+    DO ij = 1 , grid%num_tiles
+        CALL MCM_DRIVER( grid, config_flags, &
+                         t_phy, p_phy,       &
+                         moist(:,:,:,P_QV), scalar(:,:,:,P_CO2),          &
+                         moist_tend(:,:,:,P_QV), scalar_tend(:,:,:,P_CO2),&
+                         ru_tendf, rv_tendf, rw_tendf, t_tendf, tke_tend, &
+                         ids, ide, jds, jde, kds, kde,     &
+                         ims, ime, jms, jme, kms, kme,     &
+                         grid%i_start(ij), grid%i_end(ij),                &
+                         grid%j_start(ij), grid%j_end(ij),                &
+                         k_start, k_end                                   )
+    ENDDO
+  endif
 !-----------------------------------------------------------
 
 ! radiation
@@ -314,6 +316,8 @@ BENCH_START(rad_driver_tim)
      &        ,SWVISDIR=grid%swvisdir ,SWVISDIF=grid%swvisdif              &  !ssib
      &        ,SWNIRDIR=grid%swnirdir ,SWNIRDIF=grid%swnirdif              &  !ssib
      &        ,SF_SURFACE_PHYSICS=config_flags%sf_surface_physics          &  !ssib
+     &        ,mcm_opt=config_flags%mcm_opt                                &  !mcm
+     &        ,mcm_link_rad=config_flags%mcm_link_rad                      &  !mcm
 ! WRF-solar and aerosol variables from jararias 2013/8 and 2013/11
      &       ,SWDDIR=grid%swddir,SWDDNI=grid%swddni,SWDDIF=grid%swddif                              & 
      &       ,SWDDIRC=grid%swddirc, SWDDNIC=grid%swddnic                                            &
@@ -662,6 +666,7 @@ BENCH_START(surf_driver_tim)
      &        ,opt_thcnd=config_flags%opt_thcnd                                          &
      &        ,SF_SFCLAY_PHYSICS=config_flags%sf_sfclay_physics                        &
      &        ,BL_PBL_PHYSICS=config_flags%bl_pbl_physics                              &
+     &        ,mcm_opt=config_flags%mcm_opt                                            & ! TWJ
      &        ,SF_SURFACE_PHYSICS=config_flags%sf_surface_physics  ,SH2O=grid%sh2o          &
      &        ,SHDMAX=grid%shdmax      ,SHDMIN=grid%shdmin      ,SMOIS=grid%smois        &
      &        ,SMSTAV=grid%smstav      ,SMSTOT=grid%smstot      ,SNOALB=grid%snoalb      &

@@ -777,7 +777,7 @@ CONTAINS
          LIMIT1 = 20
          LIMIT1 = 43
       ELSE IF (LAND_USE_TYPE == 'NLCD40') THEN
-         KWAT = 17
+         KWAT = 21  ! TWJ: changed from 17
          RSMIN  => RSMIN_NLCD40
          Z00    => Z00_NLCD40  
          VEG0   => VEG0_NLCD40 
@@ -958,6 +958,8 @@ CONTAINS
             SUMLMN   = SUMLMN + LAIMN(K) * FAREA
             ALAI     = ALAI + FAREA
             SUMRSI   = SUMRSI + FAREA * LAIMX(K) / RSMIN(K)
+! TWJ
+!            PRINT *, I, J, K, SUMRSI, FAREA, LAIMX(K), RSMIN(K)
             SUMLZ0   = SUMLZ0 + FAREA * ALOG(Z0(K))
             SUMVEG   = SUMVEG + FAREA * VEG(K)
             SUMVMN   = SUMVMN + FAREA * VEGMN(K)
@@ -986,6 +988,13 @@ CONTAINS
             XLAI(I,J)   = SUMLAI / ALAI
             XLAIMN(I,J) = SUMLMN / ALAI
             RSTMIN(I,J) = SUMLAI / SUMRSI
+! TWJ
+!            PRINT *, I, J, SUMRSI, SUMLAI
+!            IF (SUMRSI .EQ. 0.0) THEN
+!              RSTMIN(I,J) = 0.0
+!            ELSE
+!              RSTMIN(I,J) = SUMLAI / SUMRSI
+!            ENDIF
             ZNT(I,J)    = EXP(SUMLZ0/ALAI)
             XVEG(I,J)   = SUMVEG / ALAI
             XVEGMN(I,J) = SUMVMN / ALAI

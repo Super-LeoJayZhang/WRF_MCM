@@ -90,11 +90,12 @@ CONTAINS
       kts = grid%sp32 ; kte = grid%ep32 ;   ! note that tile is entire patch
       jts = grid%sp33 ; jte = grid%ep33 ;   ! note that tile is entire patch
 #endif
+
       IF ( .NOT. already_been_here ) THEN
 
-         num_st_levels_alloc = config_flags%num_soil_layers * 3 ! used to be 2
-         num_sm_levels_alloc = config_flags%num_soil_layers * 3
-         num_sw_levels_alloc = config_flags%num_soil_layers * 3
+         num_st_levels_alloc = config_flags%num_soil_layers * 5 ! used to be 3, TWJ
+         num_sm_levels_alloc = config_flags%num_soil_layers * 5
+         num_sw_levels_alloc = config_flags%num_soil_layers * 5
 
          IF ( ALLOCATED ( st_input ) ) DEALLOCATE ( st_input )
          IF ( ALLOCATED ( sm_input ) ) DEALLOCATE ( sm_input )
@@ -105,7 +106,7 @@ CONTAINS
          ALLOCATE ( sw_input(ims:ime,num_sw_levels_alloc,jms:jme) )
 
       END IF
-
+      write (*,*) config_flags%num_soil_layers, num_st_levels_alloc, num_sm_levels_alloc, num_sw_levels_alloc
       already_been_here = .TRUE.
 
    END SUBROUTINE init_module_optional_input
@@ -1925,6 +1926,8 @@ USE module_io_domain
       CALL wrf_debug(1,message)
 
       !  OK, let's do a quick sanity check.
+
+      write (*,*) num_st_levels_input, num_st_levels_alloc, num_sm_levels_input, num_sm_levels_alloc, num_sw_levels_input, num_sw_levels_alloc
  
       IF ( ( num_st_levels_input .GT. num_st_levels_alloc ) .OR. &
            ( num_sm_levels_input .GT. num_sm_levels_alloc ) .OR. &

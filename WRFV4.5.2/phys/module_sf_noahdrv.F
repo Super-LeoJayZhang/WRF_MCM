@@ -62,7 +62,7 @@ CONTAINS
                   ids,ide, jds,jde, kds,kde,                    &
                   ims,ime, jms,jme, kms,kme,                    &
                   its,ite, jts,jte, kts,kte,                    &
-                  sf_urban_physics,                             &
+                  sf_urban_physics, mcm_opt,                    & ! TWJ
                   CMR_SFCDIF,CHR_SFCDIF,CMC_SFCDIF,CHC_SFCDIF,  &
                   CMGR_SFCDIF,CHGR_SFCDIF,                      &
 !Optional Urban
@@ -266,6 +266,8 @@ CONTAINS
                                     ims,ime, jms,jme, kms,kme,  &
                                     its,ite, jts,jte, kts,kte
 
+! TWJ
+   INTEGER,  INTENT(IN   )   ::  mcm_opt
    INTEGER,  INTENT(IN   )   ::  sf_urban_physics               !urban
    INTEGER,  INTENT(IN   )   ::  isurban
    INTEGER,  INTENT(IN   )   ::  isice
@@ -782,6 +784,14 @@ CONTAINS
 
 !-----------------------------------------------------------------------
       ILOOP : DO I=its,ite
+! TWJ: activate only when MCANOPY is inactive or when pixel in MCANOPY domain is not forest
+!      IF ( mcm_opt .EQ. 0 .OR. (mcm_opt .GT. 0 .AND. &
+!                       IVGTYP(I,J) .NE. 1   .AND. &  ! Evergreen Needleleaf Forest
+!                       IVGTYP(I,J) .NE. 2   .AND. &  ! Evergreen Broadleaf Forest
+!                       IVGTYP(I,J) .NE. 3   .AND. &  ! Deciduous Needleleaf Forest
+!                       IVGTYP(I,J) .NE. 4   .AND. &  ! Deciduous Broadleaf Forest
+!                       IVGTYP(I,J) .NE. 5 ) )     &  ! Mixed Forest
+!      THEN
 ! surface pressure
         PSFC=P8w3D(i,1,j)
 ! pressure in middle of lowest layer
@@ -1585,6 +1595,9 @@ CONTAINS
 
         ENDIF                                                           ! endif of land-sea test
 
+! TWJ
+!        ENDIF
+
       ENDDO ILOOP                                                       ! of I loop
    ENDDO JLOOP                                                          ! of J loop
 
@@ -1841,8 +1854,9 @@ CONTAINS
 
 ! initialize three Noah LSM related tables
    IF ( allowed_to_read ) THEN
-     CALL wrf_message( 'INITIALIZE THREE Noah LSM RELATED TABLES' )
+     CALL wrf_message( 'START INITIALIZE THREE Noah LSM RELATED TABLES' )
      CALL  SOIL_VEG_GEN_PARM( MMINLU, MMINSL )
+     CALL wrf_message( 'DONE INITIALIZE THREE Noah LSM RELATED TABLES' )
    ENDIF
 
 ! GAC-->

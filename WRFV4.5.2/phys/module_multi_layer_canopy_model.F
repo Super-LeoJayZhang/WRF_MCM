@@ -220,6 +220,11 @@
 
   data(soic(i), i=1,19)/1,2,2,3,3,4,5,5,6,7,7,8,8,0,&
                           1,1,4,7,1/
+! ------------------------------------------------- TWJ
+  real :: organic(nlevgrnd)  ! organic matter (kg/m3)
+  ! The following data are global average for each soil layer, taken from clm
+  data(organic(i),i=1,nlevgrnd)/15.36,15.12,13.22,10.80,8.31,6.09,4.37,3.12,&
+                                0.00,0.00,0.00,0.00,0.00,0.00,0.00/
 
   END MODULE clm_varpar_my
 ! ALL OF THESE CODE ARE MODIFIED FROM CLM4.5
@@ -294,7 +299,7 @@
       real :: cv (nlevgrnd)      ! heat capacity [J/(m2 K)]
       real :: tk (nlevgrnd)      ! thermal conductivity [W/(m K)]
 
-      real :: organic(nlevgrnd)  ! organic matter (kg/m3) 
+!      real :: organic(nlevgrnd)  ! organic matter (kg/m3) 
       real :: zwt                ! water table depth (m)
       real :: btran              ! transpiration wetness factor (0 to 1)
       real :: ems                ! top layer soil emissivity 
@@ -445,6 +450,8 @@
   integer :: i
   real :: sum_lai, LAI
 
+  write(*,*), 'TWJ z0 = ', z0
+
   ! ------- canopy ground roughness coeff. ------
   if (zi(1) < 0.) then  ! This only happens when using IBM, surface drag is invalid
       CLAI%cd0 = 0.
@@ -454,6 +461,8 @@
   !-------------------------
 
   CLAI%ipvt = 7  ! canopy type, TODO
+! TWJ
+  SP%ipts = 7 ! TODO
   CLAI%sai(:) = 0.
   call lai_wrf_grid( CLAI%tlai, CLAI%lai, CLAI%lad, CLAI%h, CLAI%z, CLAI%dz, CLAI%bl, CLAI%nw, zi(1:nz), nz)
 
@@ -524,32 +533,37 @@
 
   !--------------------------------------------------------
 
-  subroutine initial_soil_1d( z, dz, zi, rootfr, bsw, watsat, hksat, sucsat, &
-                              csol, tkmg, tkdry, tksatu, ivt, its, organic )
+!  subroutine initial_soil_1d( z, dz, zi, rootfr, bsw, watsat, hksat, sucsat, &
+!                              csol, tkmg, tkdry, tksatu, ivt, its )
+  subroutine initial_soil_1d( SP, CLAI )
   
-  use clm_varpar_my, only :  roota_par, rootb_par, sand, clay, nlevsoi, nlevgrnd
+  use clm_varpar_my, only :  roota_par, rootb_par, sand, clay, organic, nlevsoi, nlevgrnd
+  USE mcm_data_mod, only : Soil_property, canopy_lai
   implicit none
 
-  integer, intent(in) :: ivt             ! vegetation type
-  integer, intent(in) :: its             ! soil texture type
-  real, intent(in) :: organic(nlevgrnd)  ! organic material (kg/m^3)
+  TYPE(Soil_property), INTENT(INOUT) :: SP
+  TYPE(canopy_lai),    INTENT(IN)    :: CLAI
 
-  real, intent(out) :: z(0:nlevgrnd)     ! layer depth (m)
-  real, intent(out) :: dz(0:nlevgrnd)    ! layer thickness (m)
-  real, intent(out) :: zi(0:nlevgrnd)    ! interface level below a "z" level (m)
-  real, intent(out) :: rootfr(nlevgrnd)
+!  integer, intent(in) :: ivt             ! vegetation type
+!  integer, intent(in) :: its             ! soil texture type
+!!  real, intent(in) :: organic(nlevgrnd)  ! organic material (kg/m^3)
+
+!  real, intent(out) :: z(0:nlevgrnd)     ! layer depth (m)
+!  real, intent(out) :: dz(0:nlevgrnd)    ! layer thickness (m)
+!  real, intent(out) :: zi(0:nlevgrnd)    ! interface level below a "z" level (m)
+!  real, intent(out) :: rootfr(nlevgrnd)
     
-  real, intent(out) :: bsw(nlevgrnd)     ! Clapp and Hornberger "b" 
-  real, intent(out) :: watsat(nlevgrnd)  ! volumetric soil water at saturation (porosity)
-  !real, intent(out) :: watdry(nlevgrnd)  ! btran parameter for btran=0
-  !real, intent(out) :: watopt(nlevgrnd)  ! btran parameter for btran = 1
-  !real, intent(out) :: watfc(nlevgrnd)   ! volum. soil water at field capacity (nlevsoi)
-  real, intent(out) :: hksat(nlevgrnd)   ! hydraulic conductivity at saturation (mm H2O/s)
-  real, intent(out) :: sucsat(nlevgrnd)  ! minimum soil suction (mm) (nlevgrnd)
-  real, intent(out) :: csol(nlevgrnd)    ! heat capacity, soil solids (J/m**3/Kelvin)
-  real, intent(out) :: tkmg(nlevgrnd)    ! thermal conductivity, soil minerals  [W/m-K]
-  real, intent(out) :: tkdry(nlevgrnd)   ! thermal conductivity, dry soil (W/m/Kelvin)
-  real, intent(out) :: tksatu(nlevgrnd)  ! thermal conductivity, saturated soil [W/m-K]
+!  real, intent(out) :: bsw(nlevgrnd)     ! Clapp and Hornberger "b" 
+!  real, intent(out) :: watsat(nlevgrnd)  ! volumetric soil water at saturation (porosity)
+!  !real, intent(out) :: watdry(nlevgrnd)  ! btran parameter for btran=0
+!  !real, intent(out) :: watopt(nlevgrnd)  ! btran parameter for btran = 1
+!  !real, intent(out) :: watfc(nlevgrnd)   ! volum. soil water at field capacity (nlevsoi)
+!  real, intent(out) :: hksat(nlevgrnd)   ! hydraulic conductivity at saturation (mm H2O/s)
+!  real, intent(out) :: sucsat(nlevgrnd)  ! minimum soil suction (mm) (nlevgrnd)
+!  real, intent(out) :: csol(nlevgrnd)    ! heat capacity, soil solids (J/m**3/Kelvin)
+!  real, intent(out) :: tkmg(nlevgrnd)    ! thermal conductivity, soil minerals  [W/m-K]
+!  real, intent(out) :: tkdry(nlevgrnd)   ! thermal conductivity, dry soil (W/m/Kelvin)
+!  real, intent(out) :: tksatu(nlevgrnd)  ! thermal conductivity, saturated soil [W/m-K]
 
   ! ------ local ------
   real :: scalez       = 0.025 ! Soil layer thickness discretization (m)
@@ -580,31 +594,37 @@
 
   integer :: j
 
-  z(0) = 0.
+! TWJ
+  integer :: ivt, its
+
+  ivt = CLAI%ipvt
+  its = SP%ipts
+
+  SP%z(0) = 0.
   do j = 1, nlevgrnd
-      z(j) = scalez*(exp(0.5*(j - 0.5)) - 1.)    ! node depths
+      SP%z(j) = scalez*(exp(0.5*(j - 0.5)) - 1.)    ! node depths
   enddo
 !write(*,*) z
 
-  dz(1) = 0.5*(z(1) + z(2))             ! thickness b/n two interfaces
+  SP%dz(1) = 0.5*(SP%z(1) + SP%z(2))             ! thickness b/n two interfaces
   do j = 2,nlevgrnd-1
-      dz(j) = 0.5*(z(j+1) - z(j-1))
+      SP%dz(j) = 0.5*(SP%z(j+1) - SP%z(j-1))
   enddo
-  dz(nlevgrnd) = z(nlevgrnd) - z(nlevgrnd-1)
+  SP%dz(nlevgrnd) = SP%z(nlevgrnd) - SP%z(nlevgrnd-1)
 
-  zi(0) = 0.
+  SP%zi(0) = 0.
   do j = 1, nlevgrnd-1
-      zi(j) = 0.5*(z(j) + z(j+1))       ! interface depths
+      SP%zi(j) = 0.5*(SP%z(j) + SP%z(j+1))       ! interface depths
   enddo
-  zi(nlevgrnd) = z(nlevgrnd) + 0.5*dz(nlevgrnd)
+  SP%zi(nlevgrnd) = SP%z(nlevgrnd) + 0.5*SP%dz(nlevgrnd)
 
   !------------------------
   rootfr_sum = 0.
   do j = 1, nlevsoi-1
-     rootfr(j) = 0.5*( exp(-roota_par(ivt) * zi(j-1))  &
-                     + exp(-rootb_par(ivt) * zi(j-1))  &
-                     - exp(-roota_par(ivt) * zi(j  ))  &
-                     - exp(-rootb_par(ivt) * zi(j  )) )
+     SP%rootfr(j) = 0.5*( exp(-roota_par(ivt) * SP%zi(j-1))  &
+                        + exp(-rootb_par(ivt) * SP%zi(j-1))  &
+                        - exp(-roota_par(ivt) * SP%zi(j  ))  &
+                        - exp(-rootb_par(ivt) * SP%zi(j  )) )
      !if (j == 1) rootfr(j) = rootfr(j) * 0.2
      !if (j == 2) rootfr(j) = rootfr(j) * 0.3
      !if (j == 3) rootfr(j) = rootfr(j) * 0.3
@@ -612,14 +632,14 @@
      !if (j == 5) rootfr(j) = rootfr(j) * 0.7
      !if (j == 6) rootfr(j) = rootfr(j)
      !if (j == 7) rootfr(j) = rootfr(j)
-     rootfr_sum = rootfr_sum + rootfr(j)
+     rootfr_sum = rootfr_sum + SP%rootfr(j)
   enddo
-  rootfr(nlevsoi) = 0.5*( exp(-roota_par(ivt) * zi(nlevsoi-1))  &
-                        + exp(-rootb_par(ivt) * zi(nlevsoi-1)) )
-  rootfr(nlevsoi+1:nlevgrnd) = 0.
+  SP%rootfr(nlevsoi) = 0.5*( exp(-roota_par(ivt) * SP%zi(nlevsoi-1))  &
+                           + exp(-rootb_par(ivt) * SP%zi(nlevsoi-1)) )
+  SP%rootfr(nlevsoi+1:nlevgrnd) = 0.
 
   do j = 1, nlevsoi
-     rootfr(j) = rootfr(j) / rootfr_sum
+     SP%rootfr(j) = SP%rootfr(j) / rootfr_sum
   enddo
 
   !------------------------
@@ -630,14 +650,14 @@
           om_frac = 0.
       endif
 
-      om_watsat1  = max(0.93 - 0.1*(z(j)/zsapric), 0.83)
-      om_b1       = min(2.7 + 9.3*(z(j)/zsapric), 12.0)
-      om_sucsat1  = min(10.3 - 0.2*(z(j)/zsapric), 10.1)
-      om_hksat1   = max(0.28 - 0.2799*(z(j)/zsapric), 0.0001)
+      om_watsat1  = max(0.93 - 0.1*(SP%z(j)/zsapric), 0.83)
+      om_b1       = min(2.7 + 9.3*(SP%z(j)/zsapric), 12.0)
+      om_sucsat1  = min(10.3 - 0.2*(SP%z(j)/zsapric), 10.1)
+      om_hksat1   = max(0.28 - 0.2799*(SP%z(j)/zsapric), 0.0001)
 
-      bsw(j)    = (1. - om_frac)*(2.91 + 0.159*clay(its)) + om_frac*om_b1
-      sucsat(j) = (1. - om_frac)*(10.*(10.**(1.88 - 0.0131*sand(its))))+ om_frac*om_sucsat1
-      watsat(j) = (1. - om_frac)*(0.489 - 0.00126*sand(its)) + om_frac*om_watsat1
+      SP%bsw(j)    = (1. - om_frac)*(2.91 + 0.159*clay(its)) + om_frac*om_b1
+      SP%sucsat(j) = (1. - om_frac)*(10.*(10.**(1.88 - 0.0131*sand(its))))+ om_frac*om_sucsat1
+      SP%watsat(j) = (1. - om_frac)*(0.489 - 0.00126*sand(its)) + om_frac*om_watsat1
 
       ! perc_frac is zero unless perf_frac greater than percolation threshold
       if (om_frac > pc) then
@@ -655,21 +675,21 @@
       else
           uncon_hksat = 0.
       endif
-      hksat(j)  = uncon_frac*uncon_hksat + perc_frac*om_frac*om_hksat
+      SP%hksat(j)  = uncon_frac*uncon_hksat + perc_frac*om_frac*om_hksat
 
       tkm       = (1. - om_frac)*(8.80*sand(its) + 2.92*clay(its))/(sand(its) + clay(its)) &
                   + om_tkm*om_frac   ! W/(mK)
-      tkmg(j)   = tkm**(1. -  watsat(j))
+      SP%tkmg(j)   = tkm**(1. -  SP%watsat(j))
 
-      tksatu(j) = tkmg(j)*0.57**watsat(j)
+      SP%tksatu(j) = SP%tkmg(j)*0.57**SP%watsat(j)
 
       bd        = (1. - (0.489 - 0.00126*sand(its)))*2.7e3
-      tkdry(j)  = (0.135*bd + 64.7)/(2.7e3 - 0.947*bd)*(1. - om_frac) + om_tkd*om_frac
+      SP%tkdry(j)  = (0.135*bd + 64.7)/(2.7e3 - 0.947*bd)*(1. - om_frac) + om_tkd*om_frac
 
-      csol(j)   = 1.e6 * ( (1. - om_frac)*(2.128*sand(its) + 2.385*clay(its)) &
+      SP%csol(j)   = 1.e6 * ( (1. - om_frac)*(2.128*sand(its) + 2.385*clay(its)) &
                            /(sand(its) + clay(its)) + om_csol*om_frac )  ! J/(m3 K)
       if (j > nlevsoi) then
-          csol(j) = csol_bedrock
+          SP%csol(j) = csol_bedrock
       endif
 
       ! watdry(j) = watsat(j) * (316230./sucsat(j))**(-1./bsw(j))
@@ -678,6 +698,9 @@
       ! water content at field capacity, defined as hk = 0.1 mm/day
       ! used eqn (7.70) in CLM3 technote with k = 0.1 (mm/day) / 86400 (day/sec)
       ! watfc(j) = watsat(j) * (0.1 / (hksat(j)*86400.))**(1./(2.*bsw(j)+3))
+
+      ! TWJ
+      SP%ems = 0.97 ! from CLM, assume no snow
 
   enddo
 
@@ -1041,6 +1064,11 @@
   TYPE(Soil_property), INTENT(INOUT) :: S  ! S%tk, S%cv, S%btran
   TYPE(mcm_force),     INTENT(INOUT) :: M  ! M%tsoil, M%qsoil
 
+  REAL, DIMENSION(mxlevcan_wrf), INTENT(INOUT) :: sw_can_z, &
+                                                  lw_can_z, &
+                                                  efe_z,    &
+                                                  efsh_z
+
   ! --- MCM output ---
   real, INTENT(INOUT) :: qv_out(mxlevcan_wrf)  ! kg/m^2/s, positive to air
   real, INTENT(INOUT) :: sh_out(mxlevcan_wrf)  ! W/m^2, positvie to air
@@ -1051,10 +1079,10 @@
   real :: ag_out(mxlevcan_wrf)  ! (umol CO2/m**2/s)
   real :: parsun_z_1(mxlevcan_wrf)
   real :: parsha_z_1(mxlevcan_wrf)
-  real :: sw_can_z(mxlevcan_wrf)    ! absorbed sw at each canopy layer
-  real :: lw_can_z(mxlevcan_wrf)    ! absorbed lw at each canopy layer
-  real :: efe_z(mxlevcan_wrf)       ! latent heat flux from leaf (W/m^2)
-  real :: efsh_z(mxlevcan_wrf)      ! sensible heat flux from leaf (W/m^2)
+!  real :: sw_can_z(mxlevcan_wrf)    ! absorbed sw at each canopy layer
+!  real :: lw_can_z(mxlevcan_wrf)    ! absorbed lw at each canopy layer
+!  real :: efe_z(mxlevcan_wrf)       ! latent heat flux from leaf (W/m^2)
+!  real :: efsh_z(mxlevcan_wrf)      ! sensible heat flux from leaf (W/m^2)
   real :: fn_z(mxlevcan_wrf)        ! canpy layer energy residual
   real :: sw_grnd                   ! solar radiation absorbed by ground (W/m**2)
   real :: lw_grnd                   ! longwave radiation absorbed by ground (W/m**2)
@@ -1112,7 +1140,7 @@
   an_out = 0.
 
   nw = C%nw
-  IF (nw == 0) RETURN   ! over for forest canopies
+  IF (nw == 0) RETURN   ! only for forest canopies, skip non-forested cells
 
   Utop = M%wind(99)
   Ttop = M%tair(1)
@@ -1123,6 +1151,8 @@
   call boundary_layer_resistance_rb( rb_z, M%wind, nw, C%ipvt )
   !rb_z = 50.
 
+! TWJ
+  S%soilcol = 10
   call SurfaceRadiation( M%swd, M%swi, M%coszen, M%qsoil(1),   &
                          C%lai, C%sai, nw, C%ipvt, S%soilcol,  &
                          parsun_z, parsha_z, fsun_z, sw_can_z, sw_grnd, sw_out )
@@ -1154,10 +1184,13 @@
       !                     M%tair, M%co2, tveg_z, M%qair, C%lai, fsun_z,     &
       !                     M%t10, M%dayl_factor, S%btran, rb_z, nw ) 
 
+!      TWJ
+!      write(*,*) 'Entering Photosynthesis_new ...'
+
       call Photosynthesis_new( gs_sun_z, gs_sha_z, an_sun_z, an_sha_z, &
                                ag_sun_z, ag_sha_z, &
                                M%surf_pre, M%tair, M%qair, M%co2, &
-                               tveg_z, tveg_z, fsun_z, C%lai, 1./rb_z, &
+                               tveg_z, tveg_z, fsun_z, C%lai, rb_z, &
                                parsun_z(1,:), parsha_z(1,:), nw ) 
 
       qflx_tran_veg = 0.  ! [mm H20 /s], used as sink term in soil water
@@ -1172,6 +1205,8 @@
 
           efe_z(iv) = efe_z(iv)*C%lai(iv)
           efsh_z(iv) = efsh_z(iv)*C%lai(iv)
+
+          !write(*,*) efe_z(iv), efsh_z(iv)
 
           !qflx_tran_veg = qflx_tran_veg - efe_z(iv)/(hvap*M%rho(iv))
           qflx_tran_veg = qflx_tran_veg - efe_z(iv)/(hvap)
@@ -1237,6 +1272,7 @@ An_soil = 5.5
       ag_out(iv) = -ag_sun_z(iv) - ag_sha_z(iv) ! (umol CO2/m**2/s)
       !an_out(iv) = -an_sun_z(iv)*fsun_z(iv)*C%lai(iv) - &
       !             an_sha_z(iv)*(1.-fsun_z(iv))*C%lai(iv) ! (umol CO2/m**2/s)
+      !write(*,*) qv_out(iv), sh_out(iv), an_out(iv), ag_out(iv)
   ENDDO
   
   ! surface source
@@ -1335,7 +1371,16 @@ An_soil = 5.5
   efe = -hvap*rho*efe_tmp
   
   fout = sw_can + lw_can + efsh + efe + efsh_veg
-      
+
+!  TWJ
+!  write (*,*) 'In subroutine energy_func'
+
+!  if (fout < -999.) then
+!    write(*,*) '!!!!!!!!!!!'
+!    write(*,*) sw_can, lw_can, efsh, efe, efsh_veg, fout
+!    write(*,*) rho, cpair, qair, tair, tv, rb
+!  endif
+
   end subroutine energy_func
 
 !==============================================================
@@ -1369,8 +1414,8 @@ An_soil = 5.5
   real :: x_tmp, x_save, f_tmp, f_save
 
   ! initial guess
-  x1 = tair - 10
-  x2 = tair + 12
+  x1 = tair - 1.0
+  x2 = tair + 1.0
   call energy_func( f1, x1, efe, efsh, ts, tv_save, &
                     btran, tair, qair, rho, pbot, rb, rs_sun, rs_sha, fsun, tlai, tsai, &
                     sw_can, lw_can, hvap, cpair)
@@ -2193,11 +2238,20 @@ An_soil = 5.5
   real :: IRin, IRout
   integer :: iv
 
+!  TWJ
+!  write(*,*) 'In Lw_Canopy'
+!  write(*,*) ivt, forc_lwrad, t_grnd, ems, numcan
+!  write(*,*) t_veg_z(1:numcan)
+!  write(*,*) t_air_z(1:numcan)
+!  write(*,*) tlai_z(1:numcan)
+!  write(*,*) tsai_z(1:numcan)
+
   avmuir = 1.
   ev = emsv(ivt)
 
   lwcan = 0.
 
+!  write(*,*) 'Entering loop 1'
   inlayer = forc_lwrad
   do iv = 1, numcan  ! top to grnd
       ! Effectvie vegetation Emissivity, similar to sw diffusion
@@ -2207,21 +2261,28 @@ An_soil = 5.5
       outlayer = emv(iv)*sb*t_veg_z(iv)**4
       lwcan(iv) = lwcan(iv) + emv(iv)*inlayer - outlayer
       inlayer = (1.-emv(iv))*inlayer + outlayer
+!      write(*,*) iv, emv(iv), outlayer, lwcan(iv), inlayer
   enddo
 
   lw_grnd = ems*inlayer  ! consider emission later in surface energy balance
 
+!  write(*,*) 'Entering loop 2'
+!  write(*,*) inlayer
   inlayer = ems*sb*t_grnd**4 + (1.-ems)*inlayer
+!  write(*,*) inlayer, ems, sb, t_grnd
   do iv = numcan, 1, -1  ! grnd to top
       outlayer = emv(iv)*sb*t_veg_z(iv)**4
       lwcan(iv) = lwcan(iv) + emv(iv)*inlayer - outlayer
       inlayer = (1.-emv(iv))*inlayer + outlayer
+!      write(*,*) iv, emv(iv), sb, t_veg_z(iv), outlayer, lwcan(iv), inlayer
   enddo
 
   lw_out = inlayer
 
+!  write(*,*) 'Entering loop 3'
   do iv = 1, numcan  ! per LAI
       lwcan(iv) = lwcan(iv)/(tlai_z(iv)+tsai_z(iv))
+!      write(*,*) iv, lwcan(iv), tlai_z(iv), tsai_z(iv)
   enddo
 
   end subroutine Lw_Canopy
@@ -2244,8 +2305,10 @@ An_soil = 5.5
 
   DO ib = 1, numrad
       inc = max( 0.11-0.40*surf_h2osoi_vol, 0. )
+!      write(*,*) inc, surf_h2osoi_vol, soilcol, ib
       albsod(ib) = min( albsat(soilcol,ib) + inc, albdry(soilcol,ib) )
       albsoi(ib) = albsod(ib)
+!      write(*,*) albsod(ib), albsoi(ib)
   ENDDO
 
   end subroutine SoilAlbedo
@@ -3371,6 +3434,16 @@ An_soil = 5.5
 !  real :: smpso       ! soil water potential at full stomatal opening (mm)
 !  real :: smpsc       ! soil water potential at full stomatal closure (mm)
 
+!  write(*,*) 'Inside subroutine!'
+!  write(*,*) ivt
+!  write(*,*) dz
+!  write(*,*) rootfr
+!  write(*,*) sucsat
+!  write(*,*) bsw
+!  write(*,*) watsat
+!  write(*,*) h2osoi_vol
+!  write(*,*) t_soisno
+
   vol_ice = 0.
   btran = 0.
 
@@ -3401,6 +3474,7 @@ An_soil = 5.5
   enddo
 !  write(*,*) btran, tmp
   do i = 1, nlevgrnd
+!      write(*,*) i, rootr(i), btran
       rootr(i) = rootr(i)/btran  ! used in soil water subroutine as TR sink
   enddo
 
@@ -4507,7 +4581,7 @@ An_soil = 5.5
   subroutine Photosynthesis_new( gs_sun_z, gs_sha_z, An_sun_z, An_sha_z, &
                                  Ag_sun_z, Ag_sha_z, &
                                  forc_pbot, tair_z, qair_z, cair_z, &
-                                 tc_sun_z, tc_sha_z, fsun_z, lai_z, gb_z, &
+                                 tc_sun_z, tc_sha_z, fsun_z, lai_z, rb_z, & !gb_z, &
                                  par_sun_z, par_sha_z, numcan ) 
 
   use clm_varpar_my  , only : po2, mxlevcan_wrf, rgas, sc_p
@@ -4518,7 +4592,8 @@ An_soil = 5.5
   real, intent(in) :: tair_z(mxlevcan_wrf)    ! air temperature at canopy layer (kelvin)
   real, intent(in) :: qair_z(mxlevcan_wrf)    ! g/kg
   real, intent(in) :: cair_z(mxlevcan_wrf)    ! Atmospheric CO2 (ppm)
-  real, intent(in) :: gb_z(mxlevcan_wrf)      ! boundary layer conductance (m/s)
+  real, intent(in) :: rb_z(mxlevcan_wrf)      ! boundary layer resistance (s/m)
+!  real, intent(in) :: gb_z(mxlevcan_wrf)      ! boundary layer conductance (m/s)
   real, intent(in) :: tc_sun_z(mxlevcan_wrf)
   real, intent(in) :: tc_sha_z(mxlevcan_wrf)
   real, intent(in) :: fsun_z(mxlevcan_wrf)    ! sunlit fraction of canopy layer, 0 - 1.0
@@ -4584,6 +4659,34 @@ An_soil = 5.5
   vcmax25top = 64.  ! Katul
   kn = 0.1
 
+!  TWJ
+!  write(*,*) 'In Photosynthesis_new!'
+
+!  write(*,*) numcan, forc_pbot
+!  write(*,*) '!!!!! 1'
+!  write(*,*) tair_z
+!  write(*,*) '!!!!! 2'
+!  write(*,*) qair_z
+!  write(*,*) '!!!!! 3'
+!  write(*,*) cair_z
+!  write(*,*) '!!!!! 4'
+!!  write(*,*) gb_z
+!!  write(*,*) '!!!!! 5'
+!  write(*,*) rb_z
+!  write(*,*) '!!!!! 5'
+!  write(*,*) tc_sun_z
+!  write(*,*) '!!!!! 6'
+!  write(*,*) tc_sha_z
+!  write(*,*) '!!!!! 7'
+!  write(*,*) fsun_z
+!  write(*,*) '!!!!! 8'
+!  write(*,*) lai_z
+!  write(*,*) '!!!!! 9'
+!  write(*,*) par_sun_z
+!  write(*,*) '!!!!! 10'
+!  write(*,*) par_sha_z
+
+
   tlai = 0.
   do iv = 1, numcan
       
@@ -4598,12 +4701,19 @@ An_soil = 5.5
       call QSat (tc_sun_z(iv), forc_pbot, esat_sun_tv, tmp1, tmp2, tmp3)
       call QSat (tc_sha_z(iv), forc_pbot, esat_sha_tv, tmp1, tmp2, tmp3)
 
+!      write(*,*) 'Done QSat!'
+
       eair = min( qair_z(iv)*forc_pbot/(qair_z(iv) + 0.62198), esat_sha_tv)
       cair = cair_z(iv) * forc_pbot * 1.e-6 ! ppmv to Pa
 
+!      write(*,*) 'Done eair/cair!'
+
       cf = forc_pbot/(rgas*tair_z(iv))*1.e03 ! 1 s/m = 1.e-9 * R * T/P umol/m**2/s
-  
-      gb_mol = gb_z(iv)*cf  ! m/s  to mol/m^2/s
+
+!      write(*,*) 'Done cf!'
+
+!      gb_mol = gb_z(iv)*cf  ! m/s  to mol/m^2/s
+      gb_mol = (1./rb_z(iv))*cf  ! m/s  to mol/m^2/s
  
       if (par_sun_z(iv) > 0.) then
 
@@ -5765,11 +5875,14 @@ An_soil = 5.5
 
   dleaf_CHATS = 0.05
 
+!  write(*,*) numcan_wrf, mxlevcan_wrf
+
   DO i = 1, numcan_wrf
 
      wind = max(wind_z(i), 0.1)
      !rb_z(i) = 1./Cv*sqrt(dleaf(ivt)/wind_z(i))
      rb_z(i) = 1./0.005*sqrt(dleaf_CHATS/wind)
+!     write(*,*) i, dleaf_CHATS, wind, rb_z(i)
      !rb_z(i) = 1./sc_p(1)*sqrt(dleaf_CHATS/wind_z(i))
   ENDDO
   
@@ -6117,7 +6230,7 @@ An_soil = 5.5
   
   INTEGER, INTENT( IN )  ::  bl, nw, kms, kme
   REAL, DIMENSION(mxlevcan_wrf), INTENT(IN) :: mcm_var
-  REAL, DIMENSION(kms:kme), INTENT(OUT) :: WRF_var
+  REAL, DIMENSION(kms:kme), INTENT(INOUT) :: WRF_var
 
   ! --- local ---
   INTEGER :: k, tl, ir
@@ -6125,22 +6238,51 @@ An_soil = 5.5
   tl = nw + bl - 1
   DO k = bl, tl
       ir = nw - k + bl  ! numcan_wrf = tl - bl + 1
+      !write(*,*) ir, k
       WRF_var(k) = mcm_var(ir)
+      !write(*,*) mcm_var(ir), WRF_var(k)
   ENDDO
 
   end subroutine save_mcm_var
 
 ! -------------------------------------------------------------
 
-  subroutine set_mcm_force( MF, CLAI, restart, dt,                          &
+  subroutine save_mcm_var_nan( WRF_var, bl, nw, kms, kme )
+
+  USE clm_varpar_my, only : mxlevcan_wrf
+  implicit none
+
+  INTEGER, INTENT( IN )  ::  bl, nw, kms, kme
+  REAL, DIMENSION(kms:kme), INTENT(INOUT) :: WRF_var
+
+  ! --- local ---
+  INTEGER :: k, tl, ir
+
+  tl = nw + bl - 1
+  DO k = bl, tl
+      ir = nw - k + bl  ! numcan_wrf = tl - bl + 1
+      !write(*,*) ir, k
+      WRF_var(k) = -999.
+      !write(*,*) mcm_var(ir), WRF_var(k)
+  ENDDO
+
+  end subroutine save_mcm_var_nan
+
+! -------------------------------------------------------------
+
+  subroutine set_mcm_force( config_flags, MF, CLAI, restart, dt,                          &
                             sw_dir_vis, sw_dir_nir, sw_dif_vis, sw_dif_nir, &
                             lwd, coszen, Utop_C, qsoil_C, tsoil_C, G_C, &
                             P, t, qv, rho, co2, wind,             &
+                            swvisdir, swnirdir, swvisdif, swnirdif, glw, &
                             kms, kme)
 
   USE mcm_data_mod, only : mcm_force, canopy_lai
+  USE module_configure, ONLY : grid_config_rec_type
   implicit none
-  
+
+  TYPE(grid_config_rec_type), INTENT(IN   ) :: config_flags
+ 
   INTEGER, INTENT( IN )  :: kms, kme
 
   LOGICAL, INTENT(IN) :: restart
@@ -6150,6 +6292,7 @@ An_soil = 5.5
                       Utop_C, qsoil_C, tsoil_C, G_C
 
   REAL, DIMENSION(kms:kme),INTENT(IN) ::  P, t, qv, rho, wind
+  REAL, INTENT(IN) ::  swvisdir, swnirdir, swvisdif, swnirdif, glw
   REAL, DIMENSION(kms:kme),INTENT(INOUT) ::  co2  ! co2 initial here
 
   TYPE(canopy_lai), INTENT(IN) :: CLAI
@@ -6173,18 +6316,32 @@ An_soil = 5.5
       MF%rho(k)  = rho(ir)
       MF%co2(k)  = CO2(ir) ! ppmv
       MF%wind(k) = wind(ir)
+! TWJ debug
+!      print *, k, ir, t(ir), qv(ir), rho(ir), CO2(ir), wind(ir)
   ENDDO
 
-  MF%swd(1) = sw_dir_vis
-  MF%swd(2) = sw_dir_nir
-  MF%swi(1) = sw_dif_vis
-  MF%swi(2) = sw_dif_nir
-  MF%lwd    = lwd
+  IF (config_flags%mcm_link_rad) THEN
+    MF%swd(1) = swvisdir
+    MF%swd(2) = swnirdir
+    MF%swi(1) = swvisdif
+    MF%swi(2) = swnirdif
+    MF%lwd    = glw
+  ELSE
+    MF%swd(1) = sw_dir_vis
+    MF%swd(2) = sw_dir_nir
+    MF%swi(1) = sw_dif_vis
+    MF%swi(2) = sw_dif_nir
+    MF%lwd    = lwd
+  ENDIF
   MF%coszen = coszen
   MF%wind(99) = Utop_C
-  MF%qsoil(1) = qsoil_C
-  MF%tsoil(1) = tsoil_C
+  MF%qsoil(:) = qsoil_C
+  MF%tsoil(:) = tsoil_C
   MF%Gsoil = G_C
+
+! TWJ debug
+  !print *, sw_dir_vis, sw_dir_nir, sw_dif_vis, sw_dif_nir, lwd, coszen, Utop_C, qsoil_C, tsoil_C, G_C
+  !print *, swvisdir, swnirdir, swvisdif, swnirdif, glw, coszen, Utop_C, qsoil_C, tsoil_C, G_C
 
   end subroutine set_mcm_force
 
@@ -6885,8 +7042,12 @@ An_soil = 5.5
             ir = nw - k + bl  ! nw = tl - bl + 1
             A_f = CLAI(i,j)%lad(ir)
 
-            speed = sqrt( ((u(i,k,j) + u(i+1,k,j) + u(i,k-1,j) + u(i+1,k-1,j))*0.25)**2 + &
-                          ((v(i,k,j) + v(i,k,j+1) + v(i,k-1,j) + v(i,k-1,j+1))*0.25)**2 + &
+!            speed = sqrt( ((u(i,k,j) + u(i+1,k,j) + u(i,k-1,j) + u(i+1,k-1,j))*0.25)**2 + &
+!                          ((v(i,k,j) + v(i,k,j+1) + v(i,k-1,j) + v(i,k-1,j+1))*0.25)**2 + &
+!                          w(i,k,j)**2 )
+! TWJ
+            speed = sqrt( ((u(i,k,j) + u(i+1,k,j))*0.5)**2 + &
+                          ((v(i,k,j) + v(i,k,j+1))*0.5)**2 + &
                           w(i,k,j)**2 )
 
             !cd_pan(i,k,j) = min(0.8, (speed/0.29)**-0.74)
@@ -6979,7 +7140,7 @@ MODULE module_multi_layer_canopy_model
                          its, ite, jts, jte, kts, kte      )
 
   USE module_domain, only : domain
-  USE module_big_step_utilities_em, only: grid_config_rec_type
+  USE module_configure, ONLY : grid_config_rec_type
 
   USE module_multi_layer_canopy_model_func
   USE clm_varpar_my, only : nlevgrnd, mxlevcan_wrf
@@ -6988,7 +7149,7 @@ MODULE module_multi_layer_canopy_model
   USE mcm_data_mod, only : CLAI, SP, MF
 
   IMPLICIT NONE
-  TYPE(domain) , TARGET    :: grid
+  TYPE(domain) , INTENT(INOUT)   :: grid
   TYPE(grid_config_rec_type), INTENT(IN   ) :: config_flags
 
   INTEGER, INTENT( IN )  :: ids, ide, jds, jde, kds, kde, &
@@ -7032,22 +7193,24 @@ MODULE module_multi_layer_canopy_model
 
   REAL :: dt_soil
   REAL :: OBS_interval
-  INTEGER :: i, j, k, dd
+  INTEGER :: i, j, k, i_start, i_end, j_start, j_end, dd
   real, save :: sw_dir_vis = 0, sw_dir_nir = 0, sw_dif_vis = 0, sw_dif_nir = 0, &
                 lwd = 0, coszen = 0, Utop_C = 0, qsoil_C = 0, tsoil_C = 0, G_C = 0
   real :: s_bdy, roughness_len
   logical, save :: initial_mcm  = .true.
   !logical, save :: first_call_mcm  = .true.
-  integer, save :: first_call_mcm  = 0
+  !integer, save :: first_call_mcm  = 0
   !--------------------------------------------------------------------------
  
 !RETURN
 
+  CALL wrf_debug(200, 'Entering MCM_DRIVER')
+
   !------ MCM must be after IBM initiating the grid height ----
-  IF (first_call_mcm) THEN
-      first_call_mcm = .false.
-      RETURN
-  ENDIF
+!  IF (first_call_mcm) THEN
+!      first_call_mcm = .false.
+!      RETURN
+!  ENDIF
   !--------------------------------------------------------
 
   IF (.not. allocated(SP))   allocate(SP(ims:ime,jms:jme))
@@ -7074,8 +7237,14 @@ MODULE module_multi_layer_canopy_model
           !   call initiate_mcm_grass( CLAI(i,j), grid%z(i,1:kme-1,j) - hgt(i,j), kme-1, &
           !                            roughness_len )
           !endif
+
+! TWJ
+!             call initial_soil_1d( z, dz, zi, rootfr, bsw, watsat, hksat, sucsat, &
+!                              csol, tkmg, tkdry, tksatu, ivt, its )
+             call initial_soil_1d( SP(i,j), CLAI(i,j) )
       ENDDO
       ENDDO
+      CALL wrf_debug(200, 'Done initiate_mcm_forest')
   ENDIF
 
   !call random_lai()
@@ -7087,6 +7256,7 @@ MODULE module_multi_layer_canopy_model
                      ids,ide, jds,jde, kds,kde, &
                      ims,ime, jms,jme, kms,kme, &
                      its,ite, jts,jte, kts,kte )
+  CALL wrf_debug(200, 'Done surface_drag')
 
   call momentum_drag ( grid%u_2, grid%v_2, grid%w_2, grid%tke_2, grid%dt, &
                        grid%muu, grid%muv, grid%mut, grid%cd_pan, &
@@ -7095,6 +7265,7 @@ MODULE module_multi_layer_canopy_model
                        ids,ide, jds,jde, kds,kde, &
                        ims,ime, jms,jme, kms,kme, &
                        its,ite, jts,jte, kts,kte )
+  CALL wrf_debug(200, 'Done momentum_drag')
 
 !  pres_gradient = 0.00006  ! S
 !  pres_gradient = 0.00010  ! M2
@@ -7124,7 +7295,7 @@ MODULE module_multi_layer_canopy_model
 !  CO2_tend = CO2_tend + grid%mcm_co2_tend
 ! =============================================================
 
- RETURN
+!  RETURN
 
 !=============================================================
 !=============================================================
@@ -7133,25 +7304,56 @@ MODULE module_multi_layer_canopy_model
 !=============================================================
 
   OBS_interval = 30.  ! observation data time interval [s]
+  !OBS_interval = config_flags%mcm_obs_interval
   call read_obs_driving( OBS_interval, grid%itimestep, grid%dt, &
                          sw_dir_vis, sw_dir_nir, sw_dif_vis, sw_dif_nir, &   ! OBS Driving
                          lwd, coszen, Utop_C, qsoil_C, tsoil_C, G_C )     ! OBS Driving
-  dd = 5
+  CALL wrf_debug(200, 'Done read_obs_driving')
+
+  dd = 1
+  !dd = config_flags%mcm_skip_nsteps
+
+  i_start = its
+  i_end   = MIN(ite,ide-1)
+  j_start = jts
+  j_end   = MIN(jte,jde-1)
+
+! TWJ: this is likely cause of undesired TKE enhancement at boundaries
+! keep upper damping diffusion away from relaxation zones at boundaries if used
+!  IF(config_flags%specified .OR. config_flags%nested)THEN
+!    i_start = MAX(i_start,ids+config_flags%spec_bdy_width-1)
+!    i_end   = MIN(i_end,ide-config_flags%spec_bdy_width)
+!    j_start = MAX(j_start,jds+config_flags%spec_bdy_width-1)
+!    j_end   = MIN(j_end,jde-config_flags%spec_bdy_width)
+!  ENDIF
+
   IF ( mod(grid%itimestep,dd) .EQ. 0) then
-      DO j = jts, min(jte,jde-1)
-      DO i = its, min(ite,ide-1)
+      DO j = j_start, j_end
+      DO i = i_start, i_end
+
+! TWJ: run only in regions where we have forest
+!      IF ( grid%lu_index(i,j) .EQ. 1   .OR. &  ! Evergreen Needleleaf Forest
+!           grid%lu_index(i,j) .EQ. 2   .OR. &  ! Evergreen Broadleaf Forest
+!           grid%lu_index(i,j) .EQ. 3   .OR. &  ! Deciduous Needleleaf Forest
+!           grid%lu_index(i,j) .EQ. 4   .OR. &  ! Deciduous Broadleaf Forest
+!           grid%lu_index(i,j) .EQ. 5 )      &  ! Mixed Forest
+!      THEN
+
       ! --- MCM model ----
 
           dt_soil = grid%dt*dd
 
           !tmp_1d = 385.  ! set constant CO2
-          call set_mcm_force( MF(i,j), CLAI(i,j), grid%restart, dt_soil,                  &
+          call set_mcm_force( config_flags, MF(i,j), CLAI(i,j), grid%restart, dt_soil,                  &
                               sw_dir_vis, sw_dir_nir, sw_dif_vis, sw_dif_nir, &   ! OBS Driving
                               lwd, coszen, Utop_C, qsoil_C, tsoil_C, G_C,     &   ! OBS Driving
                               p_phy(i,:,j), t_phy(i,:,j), qv(i,:,j), grid%rho(i,:,j), &
                               CO2(i,:,j), wind(i,:,j),                               &
+                              grid%swvisdir(i,j), grid%swnirdir(i,j), grid%swvisdif(i,j), &
+                              grid%swnirdif(i,j), grid%glw(i,j), &
                               !tmp_1d, wind(i,:,j),                               &
                               kms, kme )
+          CALL wrf_debug(200, 'Done set_mcm_force')
 
           !====================================
           !call simple_mcm( qv_out, sh_out, an_out, &
@@ -7165,6 +7367,7 @@ MODULE module_multi_layer_canopy_model
                                    CLAI(i,j), SP(i,j), MF(i,j),        &
                                    sw_can_z, lw_can_z, efsh_z, efe_z )
                                    !sw_out, lw_out)
+          CALL wrf_debug(200, 'Done multi_layer_canopy')
 
 
           ! flux convert to tendency in WRF grid (qv_tend, co2_tend, t_tendf)
@@ -7178,12 +7381,16 @@ MODULE module_multi_layer_canopy_model
                                  !grid%cd_pan(i,:,j), & ! test
                                  grid%mcm_tau13_t(i,1,j), grid%mcm_tau13_q(i,1,j), &
                                  grid%mcm_tau13_c(i,1,j), kms, kme )
+          CALL wrf_debug(200, 'Done flux_to_tendency')
 
-          call save_mcm_var( CLAI(i,j)%lai, grid%mcm_tlai(i,:,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
-          call save_mcm_var( sw_can_z, grid%mcm_sw(i,:,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
-          call save_mcm_var( lw_can_z, grid%mcm_lw(i,:,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
-          call save_mcm_var( efsh_z,   grid%mcm_sh(i,:,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
-          call save_mcm_var( efe_z,    grid%mcm_le(i,:,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+          call save_mcm_var( CLAI(i,j)%lai, grid%mcm_tlai(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+          call save_mcm_var( sw_can_z, grid%mcm_sw(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+          call save_mcm_var( lw_can_z, grid%mcm_lw(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+          call save_mcm_var( efsh_z,   grid%mcm_sh(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+          call save_mcm_var( efe_z,    grid%mcm_le(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+          !write(*,*) efsh_z
+          !write(*,*) '!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+          !write(*,*) grid%mcm_sh(i,:,j)
           grid%mcm_sh_grnd(i,j) = SHG
           grid%mcm_le_grnd(i,j) = LEG
 
@@ -7196,8 +7403,24 @@ MODULE module_multi_layer_canopy_model
           grid%www(i,k,j) = grid%ww(i,k,j)/grid%mu_2(i,j)
       ENDDO
 
+! TWJ
+!      ELSE  ! MCANOPY inactive
+
+!          call save_mcm_var_nan( grid%mcm_tlai(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+!          call save_mcm_var_nan( grid%mcm_sw(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+!          call save_mcm_var_nan( grid%mcm_lw(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+!          call save_mcm_var_nan( grid%mcm_sh(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+!          call save_mcm_var_nan( grid%mcm_le(i,kms:kme,j), CLAI(i,j)%bl, CLAI(i,j)%nw, kms, kme )
+
+!          grid%mcm_sh_grnd(i,j) = -999.
+!          grid%mcm_le_grnd(i,j) = -999.
+
+! TWJ
+!      ENDIF
+
       ENDDO
       ENDDO
+
   ENDIF
 
 
@@ -7211,6 +7434,8 @@ MODULE module_multi_layer_canopy_model
   !                      ids, ide, jds, jde,     &
   !                      ims, ime, jms, jme,     &
   !                      its, ite, jts, jte      )
+
+  CALL wrf_debug(200, 'Leaving MCM_DRIVER')
 
   END SUBROUTINE MCM_DRIVER
 

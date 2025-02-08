@@ -210,6 +210,7 @@ subroutine camrad(RTHRATENLW,RTHRATENSW,RTHRATENLWC,RTHRATENSWC,   &
                      SWVISDIR,SWVISDIF,                            & !ssib 
                      SWNIRDIR,SWNIRDIF,                            & !ssib 
                      sf_surface_physics,                           & !ssib 
+                     mcm_opt,mcm_link_rad,                         & !mcm
                      SWDDIR,SWDDIF,SWDDNI,                         & ! amontornes-bcodina (2014-04-20)
                      F_QV,F_QC,F_QR,F_QI,F_QS,F_QG,                &
                      f_ice_phy,f_rain_phy,                         &
@@ -322,6 +323,10 @@ subroutine camrad(RTHRATENLW,RTHRATENSW,RTHRATENLWC,RTHRATENSWC,   &
                                                         SWDDIF
 
    INTEGER, INTENT(IN) :: sf_surface_physics
+
+! TWJ
+   INTEGER, INTENT(IN ) ::  mcm_opt
+   LOGICAL, INTENT(IN ) ::  mcm_link_rad
 !--------------------------------------
 ! saving arrays for doabsems reduction of radiation calcs
 
@@ -904,6 +909,20 @@ subroutine camrad(RTHRATENLW,RTHRATENSW,RTHRATENLWC,RTHRATENSWC,   &
       endif
 
    END SELECT
+
+! TWJ
+  IF (mcm_opt > 0 .and. mcm_link_rad) THEN
+      if(dosw)then
+      do i = its,ite
+        ii = i - its + 1
+        SWVISDIR(I,J) = sols(ii)  !MCM
+        SWVISDIF(I,J) = solsd(ii) !MCM
+        SWNIRDIR(I,J) = soll(ii)  !MCM
+        SWNIRDIF(I,J) = solld(ii) !MCM
+      enddo
+      endif
+  ENDIF
+
 !-----------------------------
 
     enddo    ! j-loop

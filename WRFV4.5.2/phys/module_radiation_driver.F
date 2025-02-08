@@ -191,6 +191,7 @@ CONTAINS
               ,EFCG,EFCS,EFIG,EFIS,EFSG,aercu_opt                         &
               ,EFSS,QS_CU                                                 &
               ,GHG_INPUT                                                  &
+              ,mcm_opt,mcm_link_rad                                       &
 #if (WRF_CHEM == 1)
               ,chem                                                       &
               ,aod_out                                                    &
@@ -745,6 +746,10 @@ CONTAINS
    INTEGER, INTENT(IN  ) ::                    JULDAY, itimestep
    REAL, INTENT(IN ),OPTIONAL     ::                    CURR_SECS
    LOGICAL, INTENT(IN ),OPTIONAL  ::              ADAPT_STEP_FLAG
+
+! TWJ
+   INTEGER, INTENT(IN ) ::  mcm_opt
+   LOGICAL, INTENT(IN ) ::  mcm_link_rad
 
    INTEGER,INTENT(IN)                                       :: NPHS
    REAL, DIMENSION( ims:ime, jms:jme ),INTENT(OUT)          ::    &
@@ -1998,6 +2003,7 @@ CONTAINS
                     ,SWVISDIR=swvisdir ,SWVISDIF=swvisdif              &  !fds ssib swr comp (06/2010)
                     ,SWNIRDIR=swnirdir ,SWNIRDIF=swnirdif              &  !fds ssib swr comp (06/2010)
                     ,SF_SURFACE_PHYSICS=sf_surface_physics             &  !fds
+                    ,mcm_opt=mcm_opt,mcm_link_rad=mcm_link_rad         &  !mcm
                     ,SWDDIR=swddir,SWDDIF=swddif,SWDDNI=swddni         &  !amontornes-bcodina (2014-04-20)
                     ,F_QV=f_qv,F_QC=f_qc,F_QR=f_qr                     &
                     ,F_QI=f_qi,F_QS=f_qs,F_QG=f_qg                     &
@@ -2498,6 +2504,7 @@ CONTAINS
                     ,SWVISDIR=swvisdir ,SWVISDIF=swvisdif              &  !fds ssib swr comp (06/2010)
                     ,SWNIRDIR=swnirdir ,SWNIRDIF=swnirdif              &  !fds ssib swr comp (06/2010)
                     ,SF_SURFACE_PHYSICS=sf_surface_physics             &  !fds
+                    ,mcm_opt=mcm_opt,mcm_link_rad=mcm_link_rad         &  !mcm
                     ,SWDDIR=swddir,SWDDIF=swddif,SWDDNI=swddni         &  !amontornes-bcodina (2014-04-20)
                     ,F_QV=f_qv,F_QC=f_qc,F_QR=f_qr                     &
                     ,F_QI=f_qi,F_QS=f_qs,F_QG=f_qg                     &

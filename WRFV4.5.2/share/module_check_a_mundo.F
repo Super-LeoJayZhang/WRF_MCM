@@ -721,7 +721,8 @@
       DO i = 2, model_config_rec % max_dom
          IF ( .NOT. model_config_rec % grid_allowed(i) ) CYCLE
          IF ( model_config_rec % sf_surface_physics(i)     .NE. &
-              model_config_rec % sf_surface_physics(1) ) THEN
+              model_config_rec % sf_surface_physics(1)     .AND.&
+              model_config_rec % mcm_opt(i) .EQ. 0              ) THEN
             wrf_err_message = '--- ERROR: sf_surface_physics must be equal for all domains '
             CALL wrf_message ( wrf_err_message )
             wrf_err_message = '--- Fix sf_surface_physics in namelist.input '
@@ -738,7 +739,8 @@
       DO i = 2, model_config_rec % max_dom
          IF ( .NOT. model_config_rec % grid_allowed(i) ) CYCLE
          IF ( model_config_rec % sf_sfclay_physics(i)     .NE. &
-              model_config_rec % sf_sfclay_physics(1) ) THEN
+              model_config_rec % sf_sfclay_physics(1)     .AND.&
+              model_config_rec % mcm_opt(i) .EQ. 0             ) THEN
             wrf_err_message = '--- ERROR: sf_sfclay_physics must be equal for all domains '
             CALL wrf_message ( wrf_err_message )
             wrf_err_message = '--- Fix sf_sfclay_physics in namelist.input '
